@@ -19,6 +19,7 @@ get(Queue) ->
 loop(Sockets) ->
     receive
 	{add, Socket} ->
+            error_logger:info_msg("Adding socket ~p.~n", [Socket]),
 	    self() ! rescan,
 	    loop([Socket | Sockets]);
 	{get, Pid} ->
@@ -31,6 +32,7 @@ loop(Sockets) ->
 		    loop([])
 	    end;
 	{tcp_closed, Socket} ->
+            error_logger:info_msg("Closed socket ~p.~n", [Socket]),
 	    self() ! rescan,
 	    loop(lists:delete(Socket, Sockets));
 	rescan ->
@@ -52,11 +54,12 @@ loop(Sockets) ->
 		    end,
 		    anicechat_client:lets_roll(A),
 		    anicechat_client:lets_roll(B),
-		    loop(lists:delete(A, lists:delete(B, Sockets)));
+		    loop(lists:delete(Sa, lists:delete(Sb, Sockets)));
 		_ ->
 		    loop(Sockets)
 	    end;
 	{'DOWN', _, _, _, _} ->
+            error_logger:info_msg("Down!~n"),
 	    self() ! rescan,
 	    loop(Sockets)
     end.

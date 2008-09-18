@@ -15,14 +15,14 @@ lets_roll(Client) ->
 loop(Socket, FriendSocket) ->
     receive
 	{Pid, get_socket} ->
-	    Pid ! {self(), Socket};
+	    Pid ! {self(), Socket},
+	    loop(Socket, FriendSocket);
 	{tcp, _, Line} ->
 	    error_logger:info_msg("<~p -> ~p> ~p~n",
 				  [Socket, FriendSocket, Line]),
-	    gen_tcp:send(FriendSocket, Line);
+	    gen_tcp:send(FriendSocket, Line),
+            loop(Socket, FriendSocket);
 	{tcp_closed, _} ->
 	    error_logger:info_msg("~p closed.~n", [Socket]),
-	    gen_tcp:close(FriendSocket),
-	    exit(done)
+	    gen_tcp:close(FriendSocket)
     end.
-	    
