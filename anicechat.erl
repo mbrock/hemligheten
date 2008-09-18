@@ -6,7 +6,7 @@ start() ->
     spawn(?MODULE, lets_roll, []).
 
 lets_roll() ->
-    {ok, Listener} = gen_tcp:listen(1337, 
+    {ok, Listener} = gen_tcp:listen(3100, 
 				    [list,
 				     {packet,    line}, 
 				     {recbuf,    512},

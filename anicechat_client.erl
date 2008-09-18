@@ -1,28 +1,35 @@
 -module(anicechat_client).
 
--export([start/2, lets_roll/1, loop/2]).
+-export([start/1, lets_roll/2, loop/1, loop/2]).
 
-start(Socket, FriendSocket) ->
-    spawn(?MODULE, loop, [Socket, FriendSocket]).
+start(Socket) ->
+    spawn(?MODULE, loop, [Socket]).
 
-lets_roll(Client) ->
-    Client ! {self(), get_socket},
+lets_roll(Client, Friend) ->
+    Client ! {self(), hookup, Friend},
     receive
 	{Client, Socket} ->
 	    gen_tcp:controlling_process(Socket, Client)
     end.
 
-loop(Socket, FriendSocket) ->
+loop(Socket) ->
     receive
-	{Pid, get_socket} ->
+	{Pid, hookup, Friend} ->
 	    Pid ! {self(), Socket},
-	    loop(Socket, FriendSocket);
+	    loop(Socket, Friend)
+    end.
+
+loop(Socket, Friend) ->
+    receive
 	{tcp, _, Line} ->
-	    error_logger:info_msg("<~p -> ~p> ~p~n",
-				  [Socket, FriendSocket, Line]),
-	    gen_tcp:send(FriendSocket, Line),
-            loop(Socket, FriendSocket);
+	    Friend ! {line, Line},
+            loop(Socket, Friend);
 	{tcp_closed, _} ->
-	    error_logger:info_msg("~p closed.~n", [Socket]),
-	    gen_tcp:close(FriendSocket)
+	    Friend ! close;
+	{line, Line} ->
+	    gen_tcp:send(Socket, Line),
+	    loop(Socket, Friend);
+	close ->
+	    gen_tcp:close(Socket),
+	    exit(done)
     end.
